@@ -17,6 +17,7 @@ This repository provides an **automated pipeline** to prepare and run **Amber mo
   * `build_protein.leap` – tleap file to prepare **protein-only systems**.
 * `step4.1_equilibration.inp` – Input file for initial equilibration (minimization + restrained MD).
 * `step4.2_equilibration.inp` – Input file for subsequent equilibration (unrestrained MD).
+* `step5_production.inp` – Input file for production MD simulations (30 ns, unrestrained, NPT ensemble).
 
 ---
 
