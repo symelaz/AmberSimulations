@@ -60,7 +60,7 @@ Input PDB (protein ± ligand)
           ▼
    Analysis & visualization
 ```
-```
+```mermaid
 flowchart TD
     A[Input PDB (protein or ligand)] --> B[utils/run.sh]
     B -->|If ligand present| C[Extract ligand & generate ligand parameters<br>(antechamber and frcmod)]
