@@ -1,3 +1,7 @@
+# ===========================================================
+# Build the protein system for simulation
+# ===========================================================
+
 # Load force fields for protein and water
 source leaprc.protein.ff19SB
 source leaprc.water.tip3p
