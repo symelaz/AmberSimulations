@@ -22,7 +22,7 @@ This repository provides an **automated pipeline** to prepare and run **Amber mo
 ---
 
 ## Workflow Diagram
-
+![Amber Workflow](images/workflow.jpg)
 
 ---
 
