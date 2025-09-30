@@ -42,7 +42,39 @@ conda env create -f utils/environment.yml -n openmm
 conda activate openmm
 ```
 
-> OpenMM v7.7 is required. Using an older version may cause errors.
+Ensure that the openmm is activated properly by submitting the `utils/test.sh` job
+```bash
+sbatch utils/test.sh
+```
+
+3. Create AmberTools 23 environment (needed for ligand preparation in `build.sh`)
+
+```bash
+conda create -n ambertools23 -c conda-forge python=3.9 ambertools=23
+conda activate ambertools23
+```
+
+Ensure the correct installation of `AmberTools23` by running:
+```bash
+tleap -v
+antechamber -h
+```
+
+4. Install VMD (for tcl scripts in `build.sh`, not visualization):
+ - Download VMD from https://www.ks.uiuc.edu/Research/vmd/
+ - Choose Linux version and copy to a folder on the server, e.g.:
+
+```bash
+tar -xvf vmd-1.9.4a51.bin.LINUXAMD64.opengl.tar.gz -C $HOME/tools
+export PATH=$HOME/tools/VMD-1.9.4/bin:$PATH
+```
+
+Ensure VMD executable is in the `$PATH` so `build.sh` can call TCL scripts. To test VMD installation execute:
+```bash
+vmd -dispdev text -e /dev/null -args
+```
+
+> OpenMM v7.7 and AmberTools 23 are required. Using older versions may cause errors.
 
 ---
 
@@ -53,6 +85,7 @@ conda activate openmm
 Run the main preparation script:
 
 ```bash
+conda activate ambertools23
 bash utils/build.sh <input_pdb_file> [<ligand_resname> <ligand_charge>]
 ```
 
