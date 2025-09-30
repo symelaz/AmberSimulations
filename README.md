@@ -149,8 +149,9 @@ Two-step equilibration is implemented:
 - **How it works**
    
    * Managed through `utils/run.sh`.
-   * Uses OpenMM checkpoint files (`.chk`) to continue interrupted simulations
-  
+   * Generates both **checkpoint (`.chk`)** and **restart (`.rst`)** files:
+       - `.chk` files store full OpenMM internal state, including GPU-specific randomization, and allow a **true continuation** of the simulation on the same hardware.
+     - `.rst` files contain coordinates and velocities only; they can be used to **start simulations on different GPUs** but do not fully preserve the GPU-specific state like `.chk`.
 
 ### 3. Sever Submission
 * Pinned variables in `utils/job.sh` for server submission:
