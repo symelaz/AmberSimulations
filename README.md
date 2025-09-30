@@ -41,10 +41,32 @@ module load CUDA/11.8.0
 conda env create -f utils/environment.yml -n openmm
 conda activate openmm
 ```
-
 Ensure that the openmm is activated properly by submitting the `utils/test.sh` job
 ```bash
 sbatch utils/test.sh
+```
+The output should look like this:
+```
+OpenMM Version: 7.7
+Git Revision: 130124a3f9277b054ec40927360a6ad20c8f5fa6
+
+There are 4 Platforms available:
+
+1 Reference - Successfully computed forces
+2 CPU - Successfully computed forces
+3 CUDA - Successfully computed forces
+4 OpenCL - Successfully computed forces
+
+Median difference in forces between platforms:
+
+Reference vs. CPU: 6.31347e-06
+Reference vs. CUDA: 6.72976e-06
+CPU vs. CUDA: 7.17819e-07
+Reference vs. OpenCL: 6.74399e-06
+CPU vs. OpenCL: 7.50779e-07
+CUDA vs. OpenCL: 2.16192e-07
+
+All differences are within tolerance.
 ```
 
 3. Create AmberTools 23 environment (needed for ligand preparation in `build.sh`)
@@ -53,7 +75,6 @@ sbatch utils/test.sh
 conda create -n ambertools23 -c conda-forge python=3.9 ambertools=23
 conda activate ambertools23
 ```
-
 Ensure the correct installation of `AmberTools23` by running:
 ```bash
 tleap -v
