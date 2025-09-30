@@ -62,18 +62,18 @@ Input PDB (protein ± ligand)
 ```
 ```mermaid
 flowchart TD
-    A[Input PDB (protein +/- ligand)] --> B[utils/run.sh]
-    B -->|If ligand present| C[Extract ligand & generate ligand parameters\n(antechamber + frcmod)]
+    A[Input PDB (protein or ligand)] --> B[utils/run.sh]
+    B -->|If ligand present| C[Extract ligand & generate ligand parameters<br>(antechamber and frcmod)]
     B -->|Protein-only| D[Skip ligand preparation]
-    C --> E[tleap (build_protein.leap / build_complex.leap)]
+    C --> E[tleap (build_protein.leap or build_complex.leap)]
     D --> E
-    E --> F[Solvation + Ions]
-    F --> G[step3_input.{parm7,rst7,pdb}]
+    E --> F[Solvation and Ions]
+    F --> G[step3_input.{parm7, rst7, pdb}]
     G --> H[Equilibration]
-    H --> I[step4.1_equilibration\n- Minimization\n- Restrained MD]
-    I --> J[step4.2_equilibration\n- Unrestrained MD\n- Pressure coupling]
-    J --> K[Production (step5)\n- OpenMM simulations\n- Checkpoints + DCD]
-    K --> L[Analysis & visualization]
+    H --> I[step4.1_equilibration<br>- Minimization<br>- Restrained MD]
+    I --> J[step4.2_equilibration<br>- Unrestrained MD<br>- Pressure coupling]
+    J --> K[Production (step5)<br>- OpenMM simulations<br>- Checkpoints and DCD]
+    K --> L[Analysis and visualization]
 ```
 ---
 
