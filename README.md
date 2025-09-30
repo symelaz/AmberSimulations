@@ -118,16 +118,17 @@ bash utils/run.sh <input_pdb_file> [<ligand_resname> <ligand_charge>]
 
 Two-step equilibration is implemented:
 
-1. **step4.1_equilibration.inp**
+1. **step4.1_equilibration.inp** – Minimization + restrained MD
 
-   * Minimization (5000 steps) and restrained MD
+   * Steps: 5000 minimization + 125000 restrained MD
    * Time-step: 1 fs
    * Positional restraints: backbone (400 kJ/mol/nm²), side-chain (40 kJ/mol/nm²)
    * Temperature: 303.15 K, no pressure coupling
 
-2. **step4.2_equilibration.inp**
+2. **step4.2_equilibration.inp** – Unrestrained MD
 
-   * Unrestrained MD (1,000,000 steps, 2 fs timestep)
+   * Steps: 1,000,000
+   * Timestep: 2 fs
    * Backbone restraint: 40 kJ/mol/nm², side-chain: 0
    * Pressure coupling enabled (1 bar, isotropic Monte Carlo barostat)
 
@@ -137,10 +138,21 @@ Two-step equilibration is implemented:
 
 ### 3. Production Simulation
 
-* Managed through `utils/run.sh`.
+- **step5_production.inp**
+   
+   * Steps: 15,000,000 (30 ns)
+   * Timestep: 2 fs
+   * Backbone/side-chain restraints: none
+   * NPT ensemble: temperature 303.15 K, pressure 1 bar, isotropic
+   * Output frequency: nstout = 25000, nstdcd = 250000
 
-* Uses OpenMM checkpoint files (`.chk`) to continue interrupted simulations.
+- **How it works**
+   
+   * Managed through `utils/run.sh`.
+   * Uses OpenMM checkpoint files (`.chk`) to continue interrupted simulations
+  
 
+### 3. Sever Submission
 * Pinned variables in `utils/job.sh` for server submission:
 
   * GPU devices: `--gres=gpu:rtx4090:2`
