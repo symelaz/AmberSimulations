@@ -1,15 +1,47 @@
+# ===========================================================
+# Build complex system: protein + ligand for simulation
+# ===========================================================
+
+# Load the Amber force field for proteins
 source leaprc.protein.ff19SB
+
+# Load the water model (TIP3P) for solvation
 source leaprc.water.tip3p
+
+# Load GAFF2 force field for small molecules (ligands)
 source leaprc.gaff2
+
+# Load parameters for common ions (for neutralization)
 loadamberparams frcmod.ionsjc_tip3p
-loadamberprep ./build/out.prepin #Load the prepi file for the ligand
+
+# Load ligand prepi file (prepared with antechamber)
+# This contains topology info for the ligand
+loadamberprep ./build/out.prepin
+
+# Load ligand frcmod file (force field parameters)
 loadamberparams ./build/out.frcmod
+
+# Load ligand structure (PDB format)
 drug = loadpdb ./build/out.pdb
+
+# Load protein structure without hydrogens
 receptor = loadpdb ./build/protein_noh.pdb
-system=combine{ receptor drug }
+
+# Combine protein and ligand into a single system
+system = combine { receptor drug }
+
+# Solvate the system in a cubic TIP3P water box with 15 Å padding
 solvatebox system TIP3PBOX 15.0
+
+# Add ions to neutralize the system (chloride and sodium)
 addions system Cl- 0
 addions system Na+ 0
+
+# Save Amber topology (.parm7) and coordinate (.rst7) files
 saveamberparm system step3_input.parm7 step3_input.rst7
+
+# Save the complete system as a PDB file for visualization
 savepdb system step3_input.pdb
+
+# Quit tleap
 quit
