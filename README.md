@@ -79,7 +79,7 @@ conda env create -f utils/environment.yml -n openmm
 conda activate openmm
 ```
 
-> OpenMM v6.2 or higher is required. Using an older version may cause errors.
+> OpenMM v7.7 is required. Using an older version may cause errors.
 
 ---
 
@@ -187,5 +187,5 @@ bash utils/run.sh myprotein.pdb
 
 * Ensure the **PDB file is pre-optimized** (missing hydrogens may be added automatically).
 * Simulations require the **same GPU and CUDA version** if using checkpoint files.
-* OpenMM v6.2 or higher is required.
+* OpenMM v7.7 is required.
 * Step5 production runs are controlled by the `.inp` file parameters (`dt`, `nstout`, `Target_ns`).
