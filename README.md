@@ -23,58 +23,7 @@ This repository provides an **automated pipeline** to prepare and run **Amber mo
 
 ## Workflow Diagram
 
-```
-Input PDB (protein ± ligand)
-          │
-          ▼
-   utils/run.sh
-          │
-          ├─ If ligand present → extract ligand → generate ligand parameters (antechamber + frcmod)
-          │
-          ▼
-   tleap (build_protein.leap / build_complex.leap)
-          │
-          ▼
-   Solvation + Ions
-          │
-          ▼
-   step3_input.{parm7,rst7,pdb}
-          │
-          ▼
-   Equilibration
-   ┌─────────────────────┐
-   │ step4.1_equilibration│
-   │ - Minimization       │
-   │ - Restrained MD      │
-   └─────────────────────┘
-          │
-          ▼
-   step4.2_equilibration
-   │ - Unrestrained MD    │
-   │ - Pressure coupling  │
-          │
-          ▼
-   Production (step5)
-   │ - OpenMM simulations │
-   │ - Checkpoints + DCD  │
-          ▼
-   Analysis & visualization
-```
-```mermaid
-flowchart TD
-    A[Input PDB (protein or ligand)] --> B[utils/run.sh]
-    B -->|If ligand present| C[Extract ligand & generate ligand parameters<br>(antechamber and frcmod)]
-    B -->|Protein-only| D[Skip ligand preparation]
-    C --> E[tleap (build_protein.leap or build_complex.leap)]
-    D --> E
-    E --> F[Solvation and Ions]
-    F --> G[step3_input.{parm7, rst7, pdb}]
-    G --> H[Equilibration]
-    H --> I[step4.1_equilibration<br>- Minimization<br>- Restrained MD]
-    I --> J[step4.2_equilibration<br>- Unrestrained MD<br>- Pressure coupling]
-    J --> K[Production (step5)<br>- OpenMM simulations<br>- Checkpoints and DCD]
-    K --> L[Analysis and visualization]`
-```
+
 ---
 
 ## Installation / Environment Setup (ubelix server)
@@ -105,7 +54,7 @@ conda activate openmm
 Run the main preparation script:
 
 ```bash
-bash utils/run.sh <input_pdb_file> [<ligand_resname> <ligand_charge>]
+bash utils/build.sh <input_pdb_file> [<ligand_resname> <ligand_charge>]
 ```
 
 * `<input_pdb_file>` – Path to the PDB file (protein or protein-ligand complex).
@@ -177,15 +126,15 @@ Two-step equilibration is implemented:
   * Memory: `--mem-per-cpu=8G`
   * Excluded nodes: `--exclude=gnode23`
 
-* Use `utils/batch_submit.sh` to submit multiple dependent jobs.
+* Use `utils/batch_submit.sh job.sh 10 [dependency id]` to submit multiple dependent jobs.
 
 ---
 
 ## Pinned / Important Variables
 
-* **PDB input file:** `$1` in `run.sh`
-* **Ligand residue name:** `$2` in `run.sh`
-* **Ligand charge:** `$3` in `run.sh`
+* **PDB input file:** `$1` in `build.sh`
+* **Ligand residue name:** `$2` in `build.sh`
+* **Ligand charge:** `$3` in `build.sh`
 * **tleap files:**
 
   * Protein only → `build_protein.leap`
