@@ -13,8 +13,8 @@ This repository provides an **automated pipeline** to prepare and run **Amber mo
   * `batch_submit.sh` – Helper script for submitting multiple jobs on a SLURM server.
   * `job.sh` – Example SLURM submission script for running a simulation.
   * `environment.yml` – Conda environment configuration for OpenMM.
-* `build_complex.leap` – tleap file to prepare **protein-ligand complexes**.
-* `build_protein.leap` – tleap file to prepare **protein-only systems**.
+  * `build_complex.leap` – tleap file to prepare **protein-ligand complexes**.
+  * `build_protein.leap` – tleap file to prepare **protein-only systems**.
 * `step4.1_equilibration.inp` – Input file for initial equilibration (minimization + restrained MD).
 * `step4.2_equilibration.inp` – Input file for subsequent equilibration (unrestrained MD).
 
