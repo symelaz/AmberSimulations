@@ -1,0 +1,22 @@
+# Load force fields for protein and water
+source leaprc.protein.ff19SB
+source leaprc.water.tip3p
+
+# Load parameters for ions
+loadamberparams frcmod.ionsjc_tip3p
+
+# Load protein
+receptor = loadpdb ./build/protein_noh.pdb
+
+# Solvate the protein in a TIP3P water box
+solvatebox receptor TIP3PBOX 15.0
+
+# Add counter ions (neutralize system)
+addions receptor Cl- 0
+addions receptor Na+ 0
+
+# Save Amber topology, coordinates, and PDB
+saveamberparm receptor step3_input.parm7 step3_input.rst7
+savepdb receptor step3_input.pdb
+
+quit
