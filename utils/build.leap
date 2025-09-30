@@ -1,0 +1,15 @@
+source leaprc.protein.ff19SB
+source leaprc.water.tip3p
+source leaprc.gaff2
+loadamberparams frcmod.ionsjc_tip3p
+loadamberprep ./build/out.prepin #Load the prepi file for the ligand
+loadamberparams ./build/out.frcmod
+drug = loadpdb ./build/out.pdb
+receptor = loadpdb ./build/protein_noh.pdb
+system=combine{ receptor drug }
+solvatebox system TIP3PBOX 15.0
+addions system Cl- 0
+addions system Na+ 0
+saveamberparm system step3_input.parm7 step3_input.rst7
+savepdb system step3_input.pdb
+quit
