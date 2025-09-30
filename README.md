@@ -73,7 +73,7 @@ flowchart TD
     H --> I[step4.1_equilibration<br>- Minimization<br>- Restrained MD]
     I --> J[step4.2_equilibration<br>- Unrestrained MD<br>- Pressure coupling]
     J --> K[Production (step5)<br>- OpenMM simulations<br>- Checkpoints and DCD]
-    K --> L[Analysis and visualization]
+    K --> L[Analysis and visualization]`
 ```
 ---
 
