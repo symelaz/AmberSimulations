@@ -1,12 +1,205 @@
 # Amber Simulations of Soluble Proteins
 
-This repository automatically receives an input PDB file with or without a ligand, and prepares all the files for running Amber simulations using python's OPENMM library.
+This repository provides an **automated pipeline** to prepare and run **Amber molecular dynamics simulations** of soluble proteins, with or without a ligand, using **Python’s OpenMM library**. The workflow prepares all necessary input files, solvation, ligand parameters, and simulation configurations for equilibration and production runs.
 
-To setup the simulations' files you need to run:
+---
 
-```
-bash utils/run.sh <input pdb file> <ligand's resname in the input pdb file> <ligand's desired charge for the simulation>
-```
+## Repository Structure
 
-This will generate the parameter files for the ligand [if given in the input] and the `step3_input.parm7`, `step3_input.pdb`, `step3_input.rst7` files of the protein alone or the complex.
+- `utils/` – Utility scripts for system preparation, equilibration, production runs, and server submission.
+  - `run.sh` – Main script to prepare the system and run equilibration/production simulations.
+  - `openmm_run.py` – OpenMM execution script.
+  - `batch_submit.sh` – Helper script for submitting multiple jobs on a SLURM server.
+  - `job.sh` – Example SLURM submission script for running a simulation.
+  - `environment.yml` – Conda environment configuration for OpenMM.
+  - `build_complex.leap` – tleap file to prepare **protein-ligand complexes**.
+  - `build_protein.leap` – tleap file to prepare **protein-only systems**.
+- `step4.1_equilibration.inp` – Input file for initial equilibration (minimization + restrained MD).
+- `step4.2_equilibration.inp` – Input file for subsequent equilibration (unrestrained MD).
 
+---
+
+## Workflow Diagram
+
+Input PDB (protein ± ligand)
+│
+▼
+utils/run.sh
+│
+├─ If ligand present → extract ligand → generate ligand parameters (antechamber + frcmod)
+│
+▼
+tleap (build_protein.leap / build_complex.leap)
+│
+▼
+Solvation + Ions
+│
+▼
+step3_input.{parm7,rst7,pdb}
+│
+▼
+Equilibration
+┌─────────────────────┐
+│ step4.1_equilibration│
+│ - Minimization │
+│ - Restrained MD │
+└─────────────────────┘
+│
+▼
+step4.2_equilibration
+│ - Unrestrained MD │
+│ - Pressure coupling │
+│
+▼
+Production (step5)
+│ - OpenMM simulations │
+│ - Checkpoints + DCD │
+▼
+Analysis & visualization
+
+
+---
+
+## Installation / Environment Setup (ubelix server)
+
+To run the simulations on **ubelix**:
+
+1. Load CUDA:
+
+```bash
+module load CUDA/11.8.0
+
+
+Create the OpenMM conda environment:
+
+conda env create -f utils/environment.yml -n openmm
+conda activate openmm
+
+
+OpenMM v6.2 or higher is required. Using an older version may cause errors.
+
+Preparing and Running Simulations
+1. System Preparation
+
+Run the main preparation script:
+
+bash utils/run.sh <input_pdb_file> [<ligand_resname> <ligand_charge>]
+
+
+<input_pdb_file> – Path to the PDB file (protein or protein-ligand complex).
+
+<ligand_resname> – Three-letter residue name of the ligand in the PDB file.
+
+<ligand_charge> – Total charge of the ligand (integer or decimal).
+
+Behavior:
+
+With ligand:
+
+Extracts ligand from the PDB file.
+
+Runs antechamber to generate ligand .mol2, .prepin, and .frcmod files.
+
+Uses build_complex.leap to combine protein and ligand, solvate, add ions, and generate step3_input.{parm7,rst7,pdb}.
+
+Protein-only:
+
+Extracts protein without hydrogens.
+
+Uses build_protein.leap to solvate and add ions.
+
+Generates step3_input.{parm7,rst7,pdb}.
+
+2. Equilibration
+
+Two-step equilibration is implemented:
+
+step4.1_equilibration.inp
+
+Minimization (5000 steps) and restrained MD
+
+Time-step: 1 fs
+
+Positional restraints: backbone (400 kJ/mol/nm²), side-chain (40 kJ/mol/nm²)
+
+Temperature: 303.15 K, no pressure coupling
+
+step4.2_equilibration.inp
+
+Unrestrained MD (1,000,000 steps, 2 fs timestep)
+
+Backbone restraint: 40 kJ/mol/nm², side-chain: 0
+
+Pressure coupling enabled (1 bar, isotropic Monte Carlo barostat)
+
+The equilibration runs are automatically managed in utils/run.sh.
+
+3. Production Simulation
+
+Managed through utils/run.sh.
+
+Uses OpenMM checkpoint files (.chk) to continue interrupted simulations.
+
+Pinned variables in utils/job.sh for server submission:
+
+GPU devices: --gres=gpu:rtx4090:2
+
+Job name: test
+
+Partition: gpu
+
+Conda environment: openmm
+
+Memory: --mem-per-cpu=8G
+
+Excluded nodes: --exclude=gnode23
+
+Use utils/batch_submit.sh to submit multiple dependent jobs.
+
+Pinned / Important Variables
+
+PDB input file: $1 in run.sh
+
+Ligand residue name: $2 in run.sh
+
+Ligand charge: $3 in run.sh
+
+tleap files:
+
+Protein only → build_protein.leap
+
+Protein-ligand → build_complex.leap
+
+GPU devices for production: 0,1 in job.sh
+
+Amber/GAFF parameters: frcmod.ionsjc_tip3p, out.prepin, out.frcmod
+
+Usage Example
+
+Protein-ligand system:
+
+bash utils/run.sh myprotein_ligand.pdb LIG 0
+
+
+Protein-only system:
+
+bash utils/run.sh myprotein.pdb
+
+Notes / Best Practices
+
+Ensure the PDB file is pre-optimized (missing hydrogens may be added automatically).
+
+Simulations require the same GPU and CUDA version if using checkpoint files.
+
+OpenMM v6.2 or higher is required.
+
+Step5 production runs are controlled by the .inp file parameters (dt, nstout, Target_ns).
+
+
+---
+
+This is formatted for **GitHub Markdown** and ready to paste as `README.md` in your repository.  
+
+If you want, I can also make a **slightly prettier ASCII workflow diagram using arrows and boxes** that looks more visual in the README.  
+
+Do you want me to do that?
