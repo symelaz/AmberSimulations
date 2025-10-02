@@ -23,6 +23,7 @@ This repository provides an **automated pipeline** to prepare and run **Amber mo
 
 ## Workflow Diagram
 <img src="figures/workflow.png" alt="Amber Workflow" width="600">
+
 ---
 
 ## Installation / Environment Setup (ubelix server)
