@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name="test"
+#SBATCH --job-name="Amber_simulation"
 #SBATCH --time=24:00:00
 #SBATCH --partition=gpu
 #SBATCH --qos=job_gpu
