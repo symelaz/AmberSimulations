@@ -1,23 +1,23 @@
 # Amber Simulations of Soluble Proteins
 
-This repository provides an **automated pipeline** to prepare and run **Amber molecular dynamics simulations** of soluble proteins, with or without a ligand, using **Python’s OpenMM library**. The workflow prepares all necessary input files, solvation, ligand parameters, and simulation configurations for equilibration and production runs.
+This repository provides an **automated pipeline** to prepare and run **[Amber](https://ambermd.org/) molecular dynamics simulations** of soluble proteins, with or without a ligand, using **Python’s [OpenMM](https://openmm.org/) library**. The workflow prepares all necessary input files, solvation, ligand parameters, and simulation configurations for equilibration and production runs.
 
 ---
 
 ## Repository Structure
 
 * `utils/` – Utility scripts for system preparation, equilibration, production runs, and server submission.
-
+  * `build.sh` – Main script to build system before running it.
   * `run.sh` – Main script to prepare the system and run equilibration/production simulations.
   * `openmm_run.py` – OpenMM execution script.
-  * `batch_submit.sh` – Helper script for submitting multiple jobs on a SLURM server.
-  * `job.sh` – Example SLURM submission script for running a simulation.
+  * `batch_submit.sh` – Helper script for submitting multiple jobs on a [SLURM](https://slurm.schedmd.com/) server.
+  * `job.slurm` – Example SLURM submission script for running a simulation.
   * `environment.yml` – Conda environment configuration for OpenMM.
   * `build_complex.leap` – tleap file to prepare **protein-ligand complexes**.
   * `build_protein.leap` – tleap file to prepare **protein-only systems**.
-* `step4.1_equilibration.inp` – Input file for initial equilibration (minimization + restrained MD).
-* `step4.2_equilibration.inp` – Input file for subsequent equilibration (unrestrained MD).
-* `step5_production.inp` – Input file for production MD simulations (30 ns, unrestrained, NPT ensemble).
+* `step1_equilibration.inp` – Input file for initial equilibration (minimization + restrained MD).
+* `step2_equilibration.inp` – Input file for subsequent equilibration (unrestrained MD).
+* `step3_production.inp` – Input file for production MD simulations (30 ns, unrestrained, NPT ensemble).
 
 ---
 
@@ -26,17 +26,17 @@ This repository provides an **automated pipeline** to prepare and run **Amber mo
 
 ---
 
-## Installation / Environment Setup (ubelix server)
+## Installation / Environment Setup (UBELIX server)
 
-To run the simulations on **ubelix**:
+To run the simulations on **[UBELIX](https://hpc-unibe-ch.github.io/)** or another server with [SLURM](https://slurm.schedmd.com/) installed:
 
-1. Load CUDA:
+1. Load the [CUDA](https://en.wikipedia.org/wiki/CUDA) module:
 
 ```bash
 module load CUDA/11.8.0
 ```
 
-2. Create the OpenMM conda environment:
+2. Create the OpenMM [conda](https://docs.conda.io/en/latest/) environment:
 
 ```bash
 conda env create -f utils/environment.yml -n openmm
@@ -44,9 +44,9 @@ conda activate openmm
 ```
 Ensure that the openmm is activated properly by submitting the `utils/test.sh` job
 ```bash
-sbatch utils/test.sh
+sbatch utils/test.slurm
 ```
-The output should look like this:
+The output should look something like this:
 ```
 OpenMM Version: 7.7
 Git Revision: 130124a3f9277b054ec40927360a6ad20c8f5fa6
@@ -91,7 +91,7 @@ tar -xvf vmd-1.9.4a51.bin.LINUXAMD64.opengl.tar.gz -C $HOME/tools
 export PATH=$HOME/tools/VMD-1.9.4/bin:$PATH
 ```
 
-Ensure VMD executable is in the `$PATH` so `build.sh` can call TCL scripts. To test VMD installation execute:
+Ensure VMD executable is in the `$PATH`, so `build.sh` can call TCL scripts. To test VMD installation execute:
 ```bash
 vmd -dispdev text -e /dev/null -args
 ```
@@ -120,7 +120,7 @@ bash utils/build.sh <input_pdb_file> [<ligand_resname> <ligand_charge>]
 * **With ligand:**
 
   * Extracts ligand from the PDB file.
-  * Runs `antechamber` to generate ligand `.mol2`, `.prepin`, and `.frcmod` files.
+  * Runs [`antechamber`](https://ambermd.org/antechamber/ac.html) to generate ligand `.mol2`, `.prepin`, and `.frcmod` files.
   * Uses `build_complex.leap` to combine protein and ligand, solvate, add ions, and generate `step3_input.{parm7,rst7,pdb}`.
 
 * **Protein-only:**
@@ -135,14 +135,14 @@ bash utils/build.sh <input_pdb_file> [<ligand_resname> <ligand_charge>]
 
 Two-step equilibration is implemented:
 
-1. **step4.1_equilibration.inp** – Minimization + restrained MD
+1. **step1_equilibration.inp** – Minimization + restrained MD
 
    * Steps: 5000 minimization + 125000 restrained MD
    * Time-step: 1 fs
    * Positional restraints: backbone (400 kJ/mol/nm²), side-chain (40 kJ/mol/nm²)
    * Temperature: 303.15 K, no pressure coupling
 
-2. **step4.2_equilibration.inp** – Unrestrained MD
+2. **step2_equilibration.inp** – Unrestrained MD
 
    * Steps: 1,000,000
    * Timestep: 2 fs
@@ -155,7 +155,7 @@ Two-step equilibration is implemented:
 
 ### 3. Production Simulation
 
-- **step5_production.inp**
+- **step3_production.inp**
    
    * Steps: 15,000,000 (30 ns)
    * Timestep: 2 fs
@@ -165,22 +165,22 @@ Two-step equilibration is implemented:
 
 - **How it works**
    
-   * Managed through `utils/run.sh`.
+   * Managed through `utils/run.slurm`.
    * Generates both **checkpoint (`.chk`)** and **restart (`.rst`)** files:
        - `.chk` files store full OpenMM internal state, including GPU-specific randomization, and allow a **true continuation** of the simulation on the same hardware.
      - `.rst` files contain coordinates and velocities only; they can be used to **start simulations on different GPUs** but do not fully preserve the GPU-specific state like `.chk`.
 
-### 3. Sever Submission
-* Pinned variables in `utils/job.sh` for server submission:
+### 4. Server Submission
+* Pinned variables in `utils/job.slurm` for server submission:
 
   * GPU devices: `--gres=gpu:rtx4090:2`
-  * Job name: `test`
+  * Job name: `Amber_simulation`
   * Partition: `gpu`
   * Conda environment: `openmm`
   * Memory: `--mem-per-cpu=8G`
   * Excluded nodes: `--exclude=gnode23`
 
-* Use `utils/batch_submit.sh job.sh 10 [dependency id]` to submit multiple dependent jobs.
+* Use `utils/batch_submit.sh job.slurm 10 [dependency id]` to submit multiple dependent jobs.
 
 ---
 
@@ -196,27 +196,24 @@ Two-step equilibration is implemented:
 * **GPU devices for production:** `0,1` in `job.sh`
 * **Amber/GAFF parameters:** `frcmod.ionsjc_tip3p`, `out.prepin`, `out.frcmod`
 
----
-
-## Usage Example
-
-**Protein-ligand system:**
-
-```bash
-bash utils/run.sh myprotein_ligand.pdb LIG 0
-```
-
-**Protein-only system:**
-
-```bash
-bash utils/run.sh myprotein.pdb
-```
-
----
-
 ## Notes / Best Practices
 
 * Ensure the **PDB file is pre-optimized** (missing hydrogens may be added automatically).
+    * @Symela what does that mean? What tools can I use?
 * Simulations require the **same GPU and CUDA version** if using checkpoint files.
 * OpenMM v7.7 is required.
-* Step5 production runs are controlled by the `.inp` file parameters (`dt`, `nstout`, `Target_ns`).
+* Step3 production runs are controlled by the `.inp` file parameters (`dt`, `nstout`, `Target_ns`).
+
+
+## Citation
+Reference for CHARMM-GUI (used for openmm scripts)
+
+> S. Jo, T. Kim, V.G. Iyer, and W. Im (2008)  CHARMM-GUI: A Web-based Graphical User Interface for CHARMM. J. Comput. Chem. 29:1859-1865 
+
+## License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+## Authors
+Symela Lazaridi, Univeristy of Bern, Switzerland, `symela.lazaridi@unibe.ch`
+
+Thomas Lemmin, Univeristy of Bern, Switzerland, `thomas.lemmin@unibe.ch`
