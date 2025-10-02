@@ -165,7 +165,7 @@ Two-step equilibration is implemented:
 
 - **How it works**
    
-   * Managed through `utils/run.slurm`.
+   * Managed through `utils/run.sh`.
    * Generates both **checkpoint (`.chk`)** and **restart (`.rst`)** files:
        - `.chk` files store full OpenMM internal state, including GPU-specific randomization, and allow a **true continuation** of the simulation on the same hardware.
      - `.rst` files contain coordinates and velocities only; they can be used to **start simulations on different GPUs** but do not fully preserve the GPU-specific state like `.chk`.
@@ -173,7 +173,7 @@ Two-step equilibration is implemented:
 ### 4. Server Submission
 * Pinned variables in `utils/job.slurm` for server submission:
 
-  * GPU devices: `--gres=gpu:rtx4090:2`
+  * GPU devices: `--gres=gpu:rtx4090:1`
   * Job name: `Amber_simulation`
   * Partition: `gpu`
   * Conda environment: `openmm`
