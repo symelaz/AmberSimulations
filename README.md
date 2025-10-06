@@ -82,7 +82,7 @@ tleap -v
 antechamber -h
 ```
 
-4. Install VMD (for tcl scripts in `build.sh`, not visualization):
+4. Install VMD (for tcl scripts in `build.sh`, not visualization, text=only format):
  - Download VMD from https://www.ks.uiuc.edu/Research/vmd/
  - Choose Linux version and copy to a folder on the server, e.g.:
 
