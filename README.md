@@ -84,12 +84,27 @@ antechamber -h
 
 4. Install VMD (for tcl scripts in `build.sh`, not visualization, text=only format):
  - Download VMD from https://www.ks.uiuc.edu/Research/vmd/
- - Choose Linux version and copy to a folder on the server, e.g.:
+ - Choose Linux version and copy to a folder on the server, e.g.: `LINUX_64 Text-mode (Linux (RHEL 6.7 and later) 64-bit Intel/AMD x86_64 w/ SSE, Text-mode)`
 
 ```bash
-tar -xvf vmd-1.9.4a51.bin.LINUXAMD64.opengl.tar.gz -C $HOME/tools
-export PATH=$HOME/tools/VMD-1.9.4/bin:$PATH
+gunzip vmd-1.9.3.bin.LINUXAMD64.text.tar.gz
+tar -xvf vmd-1.9.3.bin.LINUXAMD64.text.tar 
+cd vmd-1.9.3
 ```
+Go inside the configure file and change the parameter `install_bin_dir` to make it to be a local folder. Then run:
+```bash
+./confiugre
+cd src
+make install
+```
+Now there must be a NEW vmd folder created. You can access it by typing `cd ../vmd `. There should be the executables for vmd and in our case we are interested in the `vmd_LINUXAMD64` executable. To make it easier for calling you will create a "calling" executable. Open a vmd file by typing `nano vmd` and paste the commands:
+```
+#!/bin/bash
+# Wrapper to launch VMD text mode
+VMDDIR="$HOME/Tools/vmd-1.9.3/vmd"
+"$VMDDIR/vmd_LINUXAMD64" "$@"
+```
+where `$HOME/Tools/vmd-1.9.3/vmd` is the directory of installation. Then we should chamge this NEW file to be executable `chmod +x vmd` and add it to the path. So open the bashrch file: `nano ~/.bashrc` and at the end of the file add the line `export PATH=$HOME/Tools/vmd-1.9.3/vmd:$PATH`. Then run the new bashrc file `source ~/.bashrc` and now the VMD can be executed by typing `vmd`.
 
 Ensure VMD executable is in the `$PATH` so `build.sh` can call TCL scripts. To test VMD installation execute:
 ```bash
