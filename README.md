@@ -93,7 +93,7 @@ cd vmd-1.9.3
 ```
 Go inside the configure file and change the parameter `install_bin_dir` to make it to be a local folder. Then run:
 ```bash
-./confiugre
+./configure
 cd src
 make install
 ```
