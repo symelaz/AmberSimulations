@@ -84,67 +84,66 @@ antechamber -h
 
 ### 4.VMD 1.9.4a57 Installation on Ubelix
 This guide explains how to install VMD 1.9.4a57 on the Ubelix server (Linux RHEL 7+, 64-bit Intel/AMD) without CUDA or SIMD packages.
-    1. Download VMD from https://www.ks.uiuc.edu/Research/vmd/
-    2. Choose Linux version and copy to a folder on the server, e.g.: `LINUX_64 (RHEL 7+) OpenGL, CUDA, OptiX RTX, OSPRay (Linux (RHEL 7+) 64-bit Intel/AMD x86_64 SSE/AVX+ with CUDA 10, OptiX6.5 RTX, OSPRay185.opengl)`
-    3. Transfer this file to the ubelix server in the location where you want VMD installed.
-    4. Extract the package:
-        ```bash
-        gunzip vmd-1.9.4a57.bin.LINUXAMD64-CUDA102-OptiX650-OSPRay185.opengl.tar.gz
-        tar -xvf vmd-1.9.4a57.bin.LINUXAMD64-CUDA102-OptiX650-OSPRay185.opengl.tar
-        cd vmd-1.9.4a57
-        ```
-     4. Go inside the folder end extract its full path:
-        ```bash
-        cd vmd-1.9.4a57
-        pwd
-        ```
-      5. Copy this path and add it inside the configure file of the folder as shown below:
-      
-      ``` bash
-      # Name of shell script used to start program; this is the name used by users
-      $install_name = "vmd";
 
-      # Directory where VMD startup script is installed, should be in users' paths.
-      $install_bin_dir="YOUR/PATH/HERE";
-      
-      # Directory where VMD files and executables are installed
-      $install_library_dir="YOUR/PATH/HERE";
-      ```
-      
-       6. Run the configure script without CUDA or SIMD:
-       ```bash
-       ./configure LINUXAMD64 TCL IMD COLVARS SILENT
-       ```
-       7. Build VMD: go to the `src` folder and finalize installation
-       ```bash
-       cd src
-       make
-       make isntall
-       ```
-       8. Ensure correct installation of the vmd 
-       ```bash
-       cd ../
-       ./vmd
-       ```
-       This should output something like:
-       ```
-       Info) VMD for LINUXAMD64, version 1.9.4a57 (April 27, 2022)
-       Info) http://www.ks.uiuc.edu/Research/vmd/                         
-       Info) Email questions and bug reports to vmd@ks.uiuc.edu           
-       Info) Please include this reference in published work using VMD:   
-       Info)    Humphrey, W., Dalke, A. and Schulten, K., `VMD - Visual   
-       Info)    Molecular Dynamics', J. Molec. Graphics 1996, 14.1, 33-38.
-       Info) -------------------------------------------------------------
-       Info) Multithreading available, 128 CPUs.
-       Info)   CPU features: SSE2 SSE4.1 AVX AVX2 FMA F16 HT 
-       Info) Free system memory: 48GB (38%)
-       Info) No CUDA accelerator devices available.
-       Info) Dynamically loaded 3 plugins in directory:
-       Info) /storage/homefs/cr22r967/vmd-1.9.4a57/plugins/LINUXAMD64/molfile
-       vmd > 
-       ```
-       9. Add vmd to path, by adding this line `export PATH=YOUR/PATH/HERE/vmd:$PATH` at the end of the `~/.bashrc` file. 
-       10. Check again the installation by typing just `vmd` in any other folder. 
+ 1.Download VMD from https://www.ks.uiuc.edu/Research/vmd/
+ 2. Choose Linux version and copy to a folder on the server, e.g.:
+ `LINUX_64 (RHEL 7+) OpenGL, CUDA, OptiX RTX, OSPRay (Linux (RHEL 7+) 64-bit Intel/AMD x86_64 SSE/AVX+ with CUDA 10, OptiX6.5 RTX, OSPRay185.opengl)`
+ 3. Transfer this file to the ubelix server in the location where you want VMD installed.
+ 4. Extract the package:
+ ```bash
+ gunzip vmd-1.9.4a57.bin.LINUXAMD64-CUDA102-OptiX650-OSPRay185.opengl.tar.gz
+ tar -xvf vmd-1.9.4a57.bin.LINUXAMD64-CUDA102-OptiX650-OSPRay185.opengl.tar
+ cd vmd-1.9.4a57
+ ```
+ 5. Go inside the folder end extract its full path:
+ ```bash
+ cd vmd-1.9.4a57
+ pwd
+ ```
+ 6. Copy this path and add it inside the configure file of the folder as shown below:
+ 
+ ``` bash
+ # Name of shell script used to start program; this is the name used by users
+ $install_name = "vmd";
+
+ # Directory where VMD startup script is installed, should be in users' paths.
+ $install_bin_dir="YOUR/PATH/HERE";
+ 
+ # Directory where VMD files and executables are installed
+ $install_library_dir="YOUR/PATH/HERE";
+ ```
+ 
+  7. Run the configure script without CUDA or SIMD:
+  ```bash
+  ./configure LINUXAMD64 TCL IMD COLVARS SILENT
+  ```
+
+  8. Build VMD: go to the `src` folder and finalize installation
+  ```bash
+  cd src
+  make
+  make install
+  cd ../
+  ```
+
+  9. Add vmd to path, by adding this line `export PATH=YOUR/PATH/HERE/vmd:$PATH` at the end of the `~/.bashrc` file.
+  10. Check again the installation by typing just `vmd` from any folder. This should output something like:
+  ```
+  Info) VMD for LINUXAMD64, version 1.9.4a57 (April 27, 2022)
+  Info) http://www.ks.uiuc.edu/Research/vmd/                         
+  Info) Email questions and bug reports to vmd@ks.uiuc.edu           
+  Info) Please include this reference in published work using VMD:   
+  Info)    Humphrey, W., Dalke, A. and Schulten, K., `VMD - Visual   
+  Info)    Molecular Dynamics', J. Molec. Graphics 1996, 14.1, 33-38.
+  Info) -------------------------------------------------------------
+  Info) Multithreading available, 128 CPUs.
+  Info)   CPU features: SSE2 SSE4.1 AVX AVX2 FMA F16 HT 
+  Info) Free system memory: 48GB (38%)
+  Info) No CUDA accelerator devices available.
+  Info) Dynamically loaded 3 plugins in directory:
+  Info) /storage/homefs/cr22r967/vmd-1.9.4a57/plugins/LINUXAMD64/molfile
+  vmd > 
+  ```
        
 > OpenMM v7.7 and AmberTools 23 are required. Using older versions may cause errors.
 
