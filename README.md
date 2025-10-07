@@ -82,7 +82,7 @@ tleap -v
 antechamber -h
 ```
 
-### 4.VMD 1.9.4a57 Installation on Ubelix
+### 4. VMD 1.9.4a57 Installation on Ubelix
 This guide explains how to install VMD 1.9.4a57 on the Ubelix server (Linux RHEL 7+, 64-bit Intel/AMD) without CUDA or SIMD packages.
 
  1.Download VMD from https://www.ks.uiuc.edu/Research/vmd/
