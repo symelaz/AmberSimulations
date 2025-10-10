@@ -48,7 +48,7 @@ else
 fi
 
 # Extract protein without hydrogens
-vmd -dispdev text -e utils/extract_protein.tcl -args "$PDBFILE" "$FOLDER/protein_noh.pdb"
+vmd -dispdev text -e utils/extract_protein.tcl -args "$PDBFILE" "$FOLDER/protein_noh.pdb" "$RESNAME"
 
 # System preparation using tleap
 if [ "$LIGAND_PRESENT" = true ]; then
