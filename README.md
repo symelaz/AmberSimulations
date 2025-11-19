@@ -100,7 +100,7 @@ This guide explains how to install VMD 1.9.4a57 on the Ubelix server (Linux RHEL
  cd vmd-1.9.4a57
  pwd
  ```
- 6. Copy this path and add it inside the configure file of the folder as shown below:
+ 6. Copy this path and add it inside the `configure` file of the folder as shown below:
  
  ``` bash
  # Name of shell script used to start program; this is the name used by users
@@ -126,7 +126,7 @@ This guide explains how to install VMD 1.9.4a57 on the Ubelix server (Linux RHEL
   cd ../
   ```
 
-  9. Add vmd to path, by adding this line `export PATH=YOUR/PATH/HERE/vmd:$PATH` at the end of the `~/.bashrc` file.
+  9. Add vmd to path, by adding this line `export PATH=“YOUR/PATH/HERE/vmd:$PATH”`（e.g. export PATH="/storage/homefs/username/vmd-1.9.4a57/bin:$PATH"）at the end of the `~/.bashrc` file. Then source ~/.bashrc.
   10. Check again the installation by typing just `vmd` from any folder. This should output something like:
   ```
   Info) VMD for LINUXAMD64, version 1.9.4a57 (April 27, 2022)
