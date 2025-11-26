@@ -46,6 +46,7 @@ All differences are within tolerance.
 
 ```bash
 conda create -n ambertools23 -c conda-forge python=3.9 ambertools=23
+conda install -c conda-forge openbabel
 conda activate ambertools23
 ```
 Ensure the correct installation of `AmberTools23` by running:
