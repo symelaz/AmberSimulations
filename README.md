@@ -50,6 +50,34 @@ bash utils/run.sh myprotein.pdb
 
 ---
 
+## Server Submission
+* Pinned variables in `utils/job.sh` for server submission:
+
+  * GPU devices: `--gres=gpu:rtx4090:2`
+  * Job name: `test`
+  * Partition: `gpu`
+  * Conda environment: `openmm`
+  * Memory: `--mem-per-cpu=8G`
+  * Excluded nodes: `--exclude=gnode23`
+
+* Use `utils/batch_submit.sh job.sh 10 [dependency id]` to submit multiple dependent jobs.
+
+---
+
+## Pinned / Important Variables
+
+* **PDB input file:** `$1` in `build.sh`
+* **Ligand residue name:** `$2` in `build.sh`
+* **Ligand charge:** `$3` in `build.sh`
+* **tleap files:**
+
+  * Protein only → `build_protein.leap`
+  * Protein-ligand → `build_complex.leap`
+* **GPU devices for production:** `0,1` in `job.sh`
+* **Amber/GAFF parameters:** `frcmod.ionsjc_tip3p`, `out.prepin`, `out.frcmod`
+
+---
+
 ## Notes / Best Practices
 
 * Ensure the **PDB file is pre-optimized** (missing hydrogens may be added automatically).
