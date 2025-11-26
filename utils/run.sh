@@ -94,12 +94,13 @@ do
        pstep=step4.2_equilibration
     fi
 
-	if [ -f "${pstep}.chk" ]; then
-		echo "Checkpoint exists: ${pstep}.chk"
-		input_param="-ff amber -p ${init}.parm7 -c ${init}.rst7 -ichk ${pstep}.chk"
-	else
-		echo "Checkpoint does not exist, resuming from: ${pstep}.rst"
-		input_param="-ff amber -p ${init}.parm7 -c ${init}.rst7 -irst ${pstep}.rst"
+    if   [ -f ${pstep}.chk ]; then
+        input_param="-ff amber -p ${init}.parm7 -c ${init}.rst7 -ichk ${pstep}.chk"
+    elif [ -f ${pstep}.rst ]; then
+        input_param="-ff amber -p ${init}.parm7 -c ${init}.rst7 -irst ${pstep}.rst"
+    else
+        echo "ERROR: Neither ${pstep}.chk nor ${pstep}.rst found." ; exit 1
+    fi
 
     echo ">>> Running $istep..."
     python -u utils/openmm_run.py -i ${prod_prefix}.inp ${input_param} -orst ${istep}.rst -ochk ${istep}.chk -odcd ${istep}.dcd -gpu $1 > ${istep}.out
