@@ -67,10 +67,9 @@ This guide explains how to install VMD 1.9.4a57 on the Ubelix server (Linux RHEL
  tar -xvf vmd-1.9.4a57.bin.LINUXAMD64-CUDA102-OptiX650-OSPRay185.opengl.tar
  cd vmd-1.9.4a57
  ```
- 5. Go inside the folder end extract its full path:
- ```bash
- cd vmd-1.9.4a57
- pwd
+ 5. Decide installation path:
+ For example you could use: `/storage/homefs/<usrname>/Tools` 
+
  ```
  6. Copy this path and add it inside the `configure` file of the folder as shown below:
  
@@ -79,10 +78,10 @@ This guide explains how to install VMD 1.9.4a57 on the Ubelix server (Linux RHEL
  $install_name = "vmd";
 
  # Directory where VMD startup script is installed, should be in users' paths.
- $install_bin_dir="YOUR/PATH/HERE";
+ $install_bin_dir="/storage/homefs/<usrname>/Tools";
  
  # Directory where VMD files and executables are installed
- $install_library_dir="YOUR/PATH/HERE";
+ $install_library_dir="/storage/homefs/<usrname>/Tools/lib";
  ```
  
   7. Run the configure script without CUDA or SIMD:
