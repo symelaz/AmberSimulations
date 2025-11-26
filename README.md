@@ -60,7 +60,7 @@ bash utils/run.sh myprotein.pdb
   * Memory: `--mem-per-cpu=8G`
   * Excluded nodes: `--exclude=gnode23`
 
-* Use `utils/batch_submit.sh job.sh 10 [dependency id]` to submit multiple dependent jobs.
+* Use `utils/batch_submit.sh utils/job.sh 10 [dependency id]` to submit multiple dependent jobs.
 
 ---
 
