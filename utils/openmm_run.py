@@ -115,7 +115,7 @@ if args.icrst:
     simulation.context.setPositions(charmm_rst.positions)
     simulation.context.setVelocities(charmm_rst.velocities)
     simulation.context.setPeriodicBoxVectors(charmm_rst.box[0], charmm_rst.box[1], charmm_rst.box[2])
-if args.irst:
+if args.irst and not args.ichk:
     with open(args.irst, 'r') as f:
         simulation.context.setState(XmlSerializer.deserialize(f.read()))
 if args.ichk:
