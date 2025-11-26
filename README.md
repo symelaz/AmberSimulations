@@ -85,7 +85,7 @@ antechamber -h
 ### 4. VMD 1.9.4a57 Installation on Ubelix
 This guide explains how to install VMD 1.9.4a57 on the Ubelix server (Linux RHEL 7+, 64-bit Intel/AMD) without CUDA or SIMD packages.
 
- 1.Download VMD from https://www.ks.uiuc.edu/Research/vmd/
+ 1. Download VMD from https://www.ks.uiuc.edu/Research/vmd/
  2. Choose Linux version and copy to a folder on the server, e.g.:
  `LINUX_64 (RHEL 7+) OpenGL, CUDA, OptiX RTX, OSPRay (Linux (RHEL 7+) 64-bit Intel/AMD x86_64 SSE/AVX+ with CUDA 10, OptiX6.5 RTX, OSPRay185.opengl)`
  3. Transfer this file to the ubelix server in the location where you want VMD installed.
