@@ -32,7 +32,7 @@ This repository provides an **automated pipeline** to prepare and run **Amber mo
 
 ```bash
 conda activate ambertools23
-bash utils/build.sh <input_pdb_file> <ligand_resname> <ligand_charge>
+bash utils/build.sh <input_pdb_file> <ligand_resname> <ligand_charge> <ph>
 bash utils/run.sh
 ```
 
@@ -47,6 +47,7 @@ bash utils/run.sh myprotein.pdb
 * `<input_pdb_file>` – Path to the PDB file (protein or protein-ligand complex).
 * `<ligand_resname>` – Three-letter residue name of the ligand in the PDB file.
 * `<ligand_charge>` – Total charge of the ligand (integer or decimal).
+* `<ph>` – pH value of the system (normally 7.4).
 
 ---
 
