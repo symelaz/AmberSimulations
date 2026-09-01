@@ -33,7 +33,7 @@ if [ -n "$RESNAME" ] && [ -n "$LIGCHARGE" ]; then
     grep -w "$RESNAME" "$PDBFILE" | sed "s/$RESNAME/out/g" > "$FOLDER/out_noh.pdb"
 
     # Protonate the ligand
-    python utils/protonate_pdb.py "$FOLDER"/out_noh.pdb "$FOLDER"/out_ph.pdb $LIGPH
+    python utils/protonated_pdb.py "$FOLDER"/out_noh.pdb "$FOLDER"/out_ph.pdb $LIGPH
     sed -i 's/UNL/out/g' "$FOLDER"/out_ph.pdb
 
     # Run antechamber to generate ligand parameters
