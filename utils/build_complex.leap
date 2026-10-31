@@ -1,18 +1,14 @@
 # ===========================================================
 # Build complex system: protein + ligand for simulation
+# Placeholders (__X__) are filled in by utils/build.sh;
+# the filled-in file is saved as build/build_system.leap
 # ===========================================================
 
-# Load the Amber force field for proteins
-source leaprc.protein.ff19SB
-
-# Load the water model (TIP3P) for solvation
-source leaprc.water.tip3p
+# Load force fields for protein, water and ions (utils/forcefields/<MODEL>)
+source __LEAPRC__
 
 # Load GAFF2 force field for small molecules (ligands)
 source leaprc.gaff2
-
-# Load parameters for common ions (for neutralization)
-loadamberparams frcmod.ionsjc_tip3p
 
 # Load ligand prepi file (prepared with antechamber)
 # This contains topology info for the ligand
@@ -27,15 +23,17 @@ drug = loadpdb ./build/out.pdb
 # Load protein structure without hydrogens
 receptor = loadpdb ./build/protein_noh.pdb
 
-# Combine protein and ligand into a single system
+# Combine protein and ligand into a single system (protein first)
 system = combine { receptor drug }
 
-# Solvate the system in a cubic TIP3P water box with 15 Å padding
-solvatebox system TIP3PBOX 15.0
+# Solvate the system in a water box
+solvatebox system __WATERBOX__ __PAD__ __ISO__
 
-# Add ions to neutralize the system (chloride and sodium)
-addions system Cl- 0
-addions system Na+ 0
+#---- IONS ----
+# Neutralize, then add __NSALT__ ion pairs (__SALT__ M)
+addIonsRand system __CATION__ 0
+addIonsRand system Cl- 0
+__SALTLINE__addIonsRand system __CATION__ __NSALT__ Cl- __NSALT__
 
 # Save Amber topology (.parm7) and coordinate (.rst7) files
 saveamberparm system step3_input.parm7 step3_input.rst7

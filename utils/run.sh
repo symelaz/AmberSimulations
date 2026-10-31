@@ -9,13 +9,17 @@
 # https://github.com/pandegroup/openmm
 
 # INPUTS
-# 1 --> gpus to run the simulations
+# 1 --> gpus to run the simulations (default: 0)
+
+GPU=${1:-0}
 
 # Input file prefix
 init=step3_input
 
+# Number of equilibration steps = number of step4.*_equilibration.inp files
+n_eq=$(ls -1 step4.*_equilibration.inp | wc -l)
 
-# Check if any step7*.inp files exist
+# Check if any step4*.rst files exist
 if ls step4*.rst &> /dev/null; then
     # If files exist, find the highest numbered file
     cnt=$(ls -1 step4*.rst | sort -V | tail -1 | cut -d '_' -f1 | cut -d '.' -f2)
@@ -25,9 +29,9 @@ else
     cnt=1
 fi
 
-echo "Equilibration cnt is: $cnt"
+echo "Equilibration cnt is: $cnt (of $n_eq)"
 
-while [ ${cnt} -le 2 ]
+while [ ${cnt} -le ${n_eq} ]
 do
 	pcnt=$(( $cnt - 1 ))
 	istep=step4.${cnt}_equilibration
@@ -38,7 +42,10 @@ do
 	else
 		input_param="-ff amber -p ${init}.parm7 -c ${init}.rst7 -irst ${pstep}.rst"
 	fi
-	python -u utils/openmm_run.py -i ${istep}.inp ${input_param} -orst ${istep}.rst -ochk ${istep}.chk -odcd ${istep}.dcd > ${istep}.out
+	python -u utils/openmm_run.py -i ${istep}.inp ${input_param} -orst ${istep}.rst -ochk ${istep}.chk -odcd ${istep}.dcd -gpu ${GPU} > ${istep}.out
+	if [ ! -s ${istep}.rst ]; then
+		echo "ERROR: ${istep}.rst was not created. See ${istep}.out" ; exit 1
+	fi
 
     	cnt=$(( $cnt + 1 ))
 done
@@ -48,6 +55,7 @@ done
 
 prod_prefix=step5_production
 prod_step=step5
+last_eq=step4.${n_eq}_equilibration
 
 # Extract nstout and dt from the inp file of production
 inp_file=${prod_prefix}.inp
@@ -62,11 +70,14 @@ fi
 
 # Compute how many steps correspond to 1 ns
 steps_per_ns=$(echo "1000 / $dt" | bc)                # 1000 ps / 0.002 ps = 500000 steps/ns
-total_steps=$(echo "$target_ns * $steps_per_ns" | bc) # Total steps to run
+total_steps=$(printf "%.0f" $(echo "$target_ns * $steps_per_ns" | bc)) # Total steps to run (integer)
 
-# Count total lines in all step5_*.out files (1 line per nstout steps)
-total_lines=$(cat ${prod_step}_*.out 2>/dev/null | wc -l)
-completed_steps=$((total_lines * nstout))
+# Count reporter lines in all step5_*.out files (1 line per nstout steps; log lines start with '[' or '#')
+count_steps () {
+    local n=$(cat ${prod_step}_*.out 2>/dev/null | grep -c '^[0-9]')
+    echo $(( n * nstout ))
+}
+completed_steps=$(count_steps)
 
 
 # Check if any step5*.chk files exist
@@ -90,11 +101,12 @@ do
     istep=${prod_step}_${cnt}
     pstep=${prod_step}_${pcnt}
 
+    # First chunk starts from the equilibration .rst (portable XML state): a .chk may only be
+    # loaded into an identical system, and production differs (no restraints, maybe HMR).
     if [ $cnt == 1 ];then
-       pstep=step4.2_equilibration
-    fi
-
-    if   [ -f ${pstep}.chk ]; then
+       pstep=${last_eq}
+       input_param="-ff amber -p ${init}.parm7 -c ${init}.rst7 -irst ${pstep}.rst"
+    elif [ -f ${pstep}.chk ]; then
         input_param="-ff amber -p ${init}.parm7 -c ${init}.rst7 -ichk ${pstep}.chk"
     elif [ -f ${pstep}.rst ]; then
         input_param="-ff amber -p ${init}.parm7 -c ${init}.rst7 -irst ${pstep}.rst"
@@ -103,9 +115,9 @@ do
     fi
 
     echo ">>> Running $istep..."
-    python -u utils/openmm_run.py -i ${prod_prefix}.inp ${input_param} -orst ${istep}.rst -ochk ${istep}.chk -odcd ${istep}.dcd -gpu $1 > ${istep}.out
+    python -u utils/openmm_run.py -i ${prod_prefix}.inp ${input_param} -orst ${istep}.rst -ochk ${istep}.chk -odcd ${istep}.dcd -gpu ${GPU} > ${istep}.out
 
-    echo ">>> Checking if ${istep}.dcd file exists" 
+    echo ">>> Checking if ${istep}.dcd file exists"
     if [ ! -s ${istep}.dcd ]; then
     	echo "ERROR: ${istep}.dcd was not created or is empty. Exiting."
     	exit 1
@@ -113,7 +125,5 @@ do
 
     # Update counters after the run
     cnt=$((cnt + 1))
-    total_lines=$(cat ${prod_step}_*.out 2>/dev/null | wc -l)
-    completed_steps=$((total_lines * nstout))
+    completed_steps=$(count_steps)
 done
-

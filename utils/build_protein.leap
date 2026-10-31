@@ -1,23 +1,23 @@
 # ===========================================================
 # Build the protein system for simulation
+# Placeholders (__X__) are filled in by utils/build.sh;
+# the filled-in file is saved as build/build_system.leap
 # ===========================================================
 
-# Load force fields for protein and water
-source leaprc.protein.ff19SB
-source leaprc.water.tip3p
-
-# Load parameters for ions
-loadamberparams frcmod.ionsjc_tip3p
+# Load force fields for protein, water and ions (utils/forcefields/<MODEL>)
+source __LEAPRC__
 
 # Load protein
 receptor = loadpdb ./build/protein_noh.pdb
 
-# Solvate the protein in a TIP3P water box
-solvatebox receptor TIP3PBOX 15.0
+# Solvate the protein in a water box
+solvatebox receptor __WATERBOX__ __PAD__ __ISO__
 
-# Add counter ions (neutralize system)
-addions receptor Cl- 0
-addions receptor Na+ 0
+#---- IONS ----
+# Neutralize, then add __NSALT__ ion pairs (__SALT__ M)
+addIonsRand receptor __CATION__ 0
+addIonsRand receptor Cl- 0
+__SALTLINE__addIonsRand receptor __CATION__ __NSALT__ Cl- __NSALT__
 
 # Save Amber topology, coordinates, and PDB
 saveamberparm receptor step3_input.parm7 step3_input.rst7

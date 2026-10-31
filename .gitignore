@@ -1,0 +1,11 @@
+build/
+restraints/
+step3_input.*
+/step4.*_equilibration.inp
+/step5_production.inp
+step4*.out
+step4*.rst
+step4*.chk
+step4*.dcd
+step5_*
+__pycache__/

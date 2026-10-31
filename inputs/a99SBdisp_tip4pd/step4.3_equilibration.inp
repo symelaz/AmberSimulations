@@ -1,8 +1,8 @@
-nstep       = 15000000                           # Number of steps to run
+nstep       = 250000                            # Number of steps to run
 dt          = 0.002                             # Time-step (ps)
                                             
-nstout      = 25000                              # Writing output frequency (steps)
-nstdcd      = 250000                             # Writing coordinates trajectory frequency (steps)
+nstout      = 1000                              # Writing output frequency (steps)
+nstdcd      = 25000                             # Writing coordinates trajectory frequency (steps)
                                             
 coulomb     = PME                               # Electrostatic cut-off method
 ewald_Tol   = 0.0005                            # Ewald error tolerance
@@ -21,4 +21,4 @@ p_freq      = 100                               # Pressure coupling frequency (s
 cons        = HBonds                            # Constraints method
                                             
 rest        = no                                # Turn on/off restraints
-Target_ns   = 30                                # Total desired simulation time in ns
+

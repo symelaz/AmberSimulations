@@ -64,6 +64,10 @@ class _OpenMMReadInputs():
         self.temp_init        = 0.0                                       # Inital temperature of simulated annealing
         self.interval         = 0.0                                       # Annealing temperature increment
 
+        self.hmr              = 'no'                                      # Hydrogen mass repartitioning (use with dt = 0.004)
+        self.hmr_mass         = 3.024                                     # Hydrogen mass with HMR (Da)
+        self.integrator       = 'langevin'                                # langevin | langevin_middle (use langevin_middle with HMR / 4 fs)
+
         self.implicitSolvent  = None
         self.implicit_salt    = 0.0
         self.solut_diele      = 0.0
@@ -165,6 +169,13 @@ class _OpenMMReadInputs():
                         if input_value.upper() == 'YES':                self.annealing        = 'yes'
                     if input_param == 'TEMP_INIT':                      self.temp_init        = float(input_value)
                     if input_param == 'INTERVAL':                       self.interval         = float(input_value)
+                    if input_param == 'HMR':
+                        if input_value.upper() == 'YES':                self.hmr              = 'yes'
+                        if input_value.upper() == 'NO':                 self.hmr              = 'no'
+                    if input_param == 'HMR_MASS':                       self.hmr_mass         = float(input_value)
+                    if input_param == 'INTEGRATOR':
+                        if input_value.upper() == 'LANGEVIN':           self.integrator       = 'langevin'
+                        if input_value.upper() == 'LANGEVIN_MIDDLE':    self.integrator       = 'langevin_middle'
                     if input_param == 'IMPLICIT':
                         if input_value.upper() == 'HCT':                self.implicitSolvent  = HCT
                         if input_value.upper() == 'OBC1':               self.implicitSolvent  = OBC1

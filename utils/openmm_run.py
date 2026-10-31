@@ -86,7 +86,9 @@ if   args.fftype.upper() == 'CHARMM': system = top.createSystem(params, **nbopti
 elif args.fftype.upper() == 'AMBER':  system = top.createSystem(**nboptions)
 
 if inputs.vdw == 'Force-switch': system = vfswitch(system, top, inputs)
-if args.hmr: system = HydrogenMassRepartition(system, top)
+if args.hmr or inputs.hmr == 'yes':
+    system = HydrogenMassRepartition(system, top, inputs.hmr_mass)
+    if inputs.dt < 0.003: print("WARNING: HMR is on but dt = %s ps; HMR is meant for dt = 0.004" % inputs.dt)
 if inputs.lj_lrc == 'yes':
     for force in system.getForces():
         if isinstance(force, NonbondedForce): force.setUseDispersionCorrection(True)
@@ -101,7 +103,11 @@ if inputs.e14scale != 1.0:
 
 if inputs.pcouple == 'yes':      system = barostat(system, inputs)
 if inputs.rest == 'yes':         system = restraints(system, crd, inputs)
-integrator = LangevinIntegrator(inputs.temp*kelvin, inputs.fric_coeff/picosecond, inputs.dt*picoseconds)
+if inputs.integrator == 'langevin_middle':
+    integrator = LangevinMiddleIntegrator(inputs.temp*kelvin, inputs.fric_coeff/picosecond, inputs.dt*picoseconds)
+else:
+    integrator = LangevinIntegrator(inputs.temp*kelvin, inputs.fric_coeff/picosecond, inputs.dt*picoseconds)
+print("Integrator: %s, dt = %s ps" % (integrator.__class__.__name__, inputs.dt))
 
 # Set platform
 platform = Platform.getPlatformByName('CUDA')
