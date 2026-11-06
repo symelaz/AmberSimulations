@@ -1,0 +1,5 @@
+# MODEL=ff19SB_tip4pew : ff19SB protein + TIP4P-Ew water + Joung-Cheatham ions (all from AmberTools)
+# leaprc.water.tip4pew already loads frcmod.ionsjc_tip4pew itself, so no extra ion line is needed
+# (unlike leaprc.water.tip3p, whose ion set the ff19SB_tip3p wrapper loads explicitly).
+source leaprc.protein.ff19SB
+source leaprc.water.tip4pew

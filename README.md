@@ -11,9 +11,37 @@ Two force-field models are available with the same workflow; only the force fiel
 | `MODEL`                    | Protein                 | Water                          | Ions (default salt)                     | Equilibration | Typical use |
 |----------------------------|-------------------------|--------------------------------|-----------------------------------------|---------------|-------------|
 | `ff19SB_tip3p` (default)   | ff19SB                  | TIP3P                          | Joung-Cheatham, neutralize only (Na+/Cl−) | 2 steps       | folded proteins, protein–ligand |
+| `ff19SB_tip4pew`           | ff19SB                  | TIP4P-Ew                       | Joung-Cheatham, neutralize + 0.15 M NaCl  | 2 steps       | folded proteins where TIP4P-Ew is wanted for consistency with other runs. **Caution:** ff19SB was parameterised/validated against OPC, not TIP4P-Ew; this pairing is not the validated one. |
 | `a99SBdisp_tip4pd`         | a99SB-disp (+ extra backbone dihedrals) | TIP4P-D (a99SB-disp variant)    | CHARMM22, neutralize + 0.15 M KCl        | 3 steps       | disordered proteins, unfolding; protocol of Sarthak et al. 2023 (JCTC 19:3721) |
 
 The a99SB-disp/TIP4P-D files come from `pipeline_amber_tip4pd` (T. Lemmin, M. McCully; MIT licence, see `utils/forcefields/a99SBdisp_tip4pd/LICENSE_pipeline_amber_tip4pd`).
+
+### Water models
+
+Exact charges and geometry of every water model this repo can build, as measured from the built
+topology (`utils/check_topology.py` prints this same block for every build - compare it against this
+table to be sure which water you actually got).
+
+| Model | Sites | q(H) | q(M) | d(O-M) | O sigma (A) | O epsilon (kcal/mol) | `MODEL` / `WATER` |
+|---|--:|--:|--:|--:|--:|--:|---|
+| TIP3P | 3 | +0.417 | - | - | 3.1507 | 0.1520 | `ff19SB_tip3p` |
+| TIP4P-Ew | 4 | +0.52422 | -1.04844 | 0.1250 A | 3.1644 | 0.16275 | `ff19SB_tip4pew` |
+| TIP4P-D (authors, default) | 4 | +0.59 | -1.18 | 0.1546 A | 3.1650 | 0.238764 | `a99SBdisp_tip4pd` `WATER=authors` |
+| TIP4P-D (AmberTools) | 4 | +0.58 | -1.16 | 0.1546 A | 3.1650 | 0.238764 | `a99SBdisp_tip4pd` `WATER=amber` |
+
+`M` is the massless virtual site (EPW/EP), not a real atom; O itself carries zero charge in every
+4-site model. TIP4P-D's larger O epsilon (about 47% more dispersion than TIP4P-Ew/OPC-class models) is
+the deliberate fix of Piana/Donchev/Robustelli/Shaw (2015, JPCB 119:5113): standard water models
+under-solvate disordered/unfolded chains relative to folded ones, biasing simulated ensembles toward
+being too compact; TIP4P-D's extra water-protein dispersion corrects for that. This is also why the
+`a99SBdisp_tip4pd` model is recommended for disordered proteins and unfolding over `ff19SB_tip4pew`.
+
+**`ff19SB_tip4pew` is a non-validated pairing.** ff19SB's backbone torsions were parameterised and
+benchmarked against OPC, not TIP4P-Ew. Both are rigid 4-site models with similar geometry, so it runs
+fine, but the secondary-structure/folding balance was not tuned for this particular water. Use it when
+TIP4P-Ew is wanted for consistency with other runs in the project; prefer `ff19SB_tip3p` (its own
+validated pairing) or OPC otherwise.
+
 
 ---
 
@@ -23,17 +51,18 @@ All options are environment variables in front of `build.sh`; anything not set u
 
 | Variable | Default | Options | Meaning |
 |----------|---------|---------|---------|
-| `MODEL`  | `ff19SB_tip3p` | `ff19SB_tip3p`, `a99SBdisp_tip4pd` | force field + water + ions (table above) |
+| `MODEL`  | `ff19SB_tip3p` | `ff19SB_tip3p`, `ff19SB_tip4pew`, `a99SBdisp_tip4pd` | force field + water + ions (table above) |
 | `WATER`  | `authors` | `authors`, `amber` | `a99SBdisp_tip4pd` only. `authors`: water of pipeline_amber_tip4pd (H +0.59 / EP −1.18). `amber`: AmberTools `leaprc.water.tip4pd-a99SBdisp` (H +0.58 / EP −1.16). Same LJ. |
 | `BOX`    | `rect`  | `rect`, `cubic` | box shape |
 | `PAD`    | `15.0`  | number (Å) | minimum solvent padding around the solute |
-| `SALT`   | `0` (ff19SB_tip3p) / `0.15` (a99SBdisp_tip4pd) | number (M) | salt added on top of neutralization (0 = neutralize only) |
-| `CATION` | `Na+` (ff19SB_tip3p) / `K+` (a99SBdisp_tip4pd) | `Na+`, `K+` | cation for neutralization and salt (anion is always Cl−) |
+| `SALT`   | `0` (ff19SB_tip3p) / `0.15` (ff19SB_tip4pew, a99SBdisp_tip4pd) | number (M) | salt added on top of neutralization (0 = neutralize only) |
+| `CATION` | `Na+` (ff19SB_tip3p, ff19SB_tip4pew) / `K+` (a99SBdisp_tip4pd) | `Na+`, `K+` | cation for neutralization and salt (anion is always Cl−) |
 
 Examples:
 
 ```bash
 bash utils/build.sh input.pdb                                         # ff19SB / TIP3P, as before
+MODEL=ff19SB_tip4pew bash utils/build.sh input.pdb                    # ff19SB / TIP4P-Ew, 0.15 M NaCl
 MODEL=a99SBdisp_tip4pd bash utils/build.sh input.pdb                  # a99SB-disp / TIP4P-D, 0.15 M KCl
 MODEL=a99SBdisp_tip4pd WATER=amber BOX=cubic bash utils/build.sh input.pdb
 SALT=0.15 bash utils/build.sh input.pdb LIG -1 7.4                    # ff19SB + ligand + 0.15 M NaCl
@@ -92,10 +121,27 @@ Edit those copies (`step4.*_equilibration.inp`, `step5_production.inp`) for a sp
   * `job.sh` – Example SLURM submission script for running a simulation.
   * `environment.yml` – Conda environment configuration for OpenMM.
 
+## Disulfide bonds
+
+`utils/find_disulfides.py` runs automatically inside `build.sh`, right after the protein is extracted
+and before tleap: it scans for CYS pairs whose SG atoms are closer than 2.5 A (override with
+`SS_CUTOFF=...`), renames the matching residues CYS -> CYX (otherwise tleap adds a free thiol
+hydrogen and leaves them unbonded), and writes the `bond receptor.N.SG receptor.M.SG` command tleap
+needs. The residue numbers it uses are tleap's own sequential numbering within the loaded unit (1, 2,
+3, ... in file order), not the PDB's chain/resSeq - the same numbering the "Notes" section below
+describes for multi-chain systems.
+
+`utils/check_topology.py` then verifies, in the finished topology, that each detected pair really is
+bonded SG-SG, both residues are CYX, and neither carries a stray HG - not merely that no error was
+printed. A build with zero cysteine pairs is a normal, unflagged outcome.
+
 ## Build outputs
 
 * `step3_input.parm7 / .rst7 / .pdb`, `restraints/prot_pos.txt` – simulation inputs.
-* `build/topology_report.txt` – parameter check (all lines must be PASS).
+* `build/disulfides.leap`, `build/disulfides.json` – disulfides found by `find_disulfides.py` (bond
+  commands and, respectively, the same pairs with original chain/resSeq labels and SG-SG distance).
+* `build/topology_report.txt` – parameter check (all lines must be PASS), including a water-model
+  fingerprint block to compare against the table above.
 * `build/build_settings.txt`, `build/build_system.leap`, `build/tleap_build.log` – exact build record.
 * `build/loaded_files.txt` – every file tleap loaded, with its path.
 
@@ -143,6 +189,6 @@ Edit those copies (`step4.*_equilibration.inp`, `step5_production.inp`) for a sp
 * Funky ligands might fail to be parameterized by Amber automatically.
 * Very large biological systems might fail to be parameterized by Amber. And for Membrane systems I also recommend to go with CHARMM force-field. DNA however is being handled better by Amber.
 * Step5 production runs are controlled by the `.inp` file parameters (`dt`, `nstout`, `Target_ns`).
-* Disulfide bonds are not detected automatically.
+* Disulfide bonds are detected automatically (see "Disulfide bonds" above); only genuine SG-SG contacts within the cutoff are bonded, nothing else changes.
 * GAFF2 ligands have not been validated with TIP4P-D water.
 * Extended / disordered structures (e.g. AlphaFold models with low pLDDT): with `BOX=rect` the chain can reach its periodic image when it rotates; consider `BOX=cubic` (large) or compacting the model first.

@@ -7,5 +7,8 @@ step4*.out
 step4*.rst
 step4*.chk
 step4*.dcd
-step5_*
+step5_*.out
+step5_*.rst
+step5_*.chk
+step5_*.dcd
 __pycache__/

@@ -23,6 +23,11 @@ drug = loadpdb ./build/out.pdb
 # Load protein structure without hydrogens
 receptor = loadpdb ./build/protein_noh.pdb
 
+# Disulfide bonds detected by utils/find_disulfides.py (SG-SG < cutoff in the
+# input structure); empty if none were found. See build/disulfides.json for
+# the pairs, build/disulfides.leap for these exact lines. Must come before
+# `combine`: the bond command addresses receptor's own residue numbering.
+__DISULFIDES__
 # Combine protein and ligand into a single system (protein first)
 system = combine { receptor drug }
 

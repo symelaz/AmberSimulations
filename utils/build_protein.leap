@@ -10,6 +10,10 @@ source __LEAPRC__
 # Load protein
 receptor = loadpdb ./build/protein_noh.pdb
 
+# Disulfide bonds detected by utils/find_disulfides.py (SG-SG < cutoff in the
+# input structure); empty if none were found. See build/disulfides.json for
+# the pairs, build/disulfides.leap for these exact lines.
+__DISULFIDES__
 # Solvate the protein in a water box
 solvatebox receptor __WATERBOX__ __PAD__ __ISO__
 

@@ -39,6 +39,14 @@ case "$MODEL" in
         WATER=tip3p
         LEAPRC=leaprc.pipe_ff19SB_tip3p;   WATERBOX=TIP3PBOX
         SALT=${SALT:-0};    CATION=${CATION:-Na+};  ADD8=false ;;
+    ff19SB_tip4pew)
+        # Native TIP4P-Ew (NOT the TIP4P-D of a99SBdisp_tip4pd's WATER=authors, which only
+        # reuses the TIP4PEWBOX starting box name but loads different, D-variant parameters).
+        # ff19SB was parameterised/validated against OPC, not TIP4P-Ew; added here anyway
+        # because other simulations in this project standardise on TIP4P-Ew.
+        WATER=tip4pew
+        LEAPRC=leaprc.pipe_ff19SB_tip4pew; WATERBOX=TIP4PEWBOX
+        SALT=${SALT:-0.15}; CATION=${CATION:-Na+};  ADD8=false ;;
     a99SBdisp_tip4pd)
         WATER=${WATER:-authors}
         case "$WATER" in
@@ -48,7 +56,7 @@ case "$MODEL" in
         esac
         LEAPRC=leaprc.pipe_a99SBdisp_tip4pd_${WATER}
         SALT=${SALT:-0.15}; CATION=${CATION:-K+};   ADD8=true ;;
-    *) echo "ERROR: MODEL must be 'ff19SB_tip3p' or 'a99SBdisp_tip4pd'"; exit 1 ;;
+    *) echo "ERROR: MODEL must be 'ff19SB_tip3p', 'ff19SB_tip4pew' or 'a99SBdisp_tip4pd'"; exit 1 ;;
 esac
 if [ "$BOX" = "cubic" ]; then ISO=iso; elif [ "$BOX" = "rect" ]; then ISO=""; else echo "ERROR: BOX must be 'rect' or 'cubic'"; exit 1; fi
 
@@ -63,7 +71,8 @@ echo "MODEL=$MODEL WATER=$WATER BOX=$BOX PAD=$PAD SALT=$SALT CATION=$CATION" | t
 LEAP="tleap -s -I utils/forcefields/$MODEL"
 fill () {  # fill the placeholders of a leap template
     sed -e "s/__LEAPRC__/$LEAPRC/" -e "s/__WATERBOX__/$WATERBOX/" -e "s/__PAD__/$PAD/" -e "s/__ISO__/$ISO/" \
-        -e "s/__CATION__/$CATION/g" -e "s/__SALT__/$SALT/" -e "s/__NSALT__/$NSALT/g" -e "s/__SALTLINE__/$SALTLINE/" "$1"
+        -e "s/__CATION__/$CATION/g" -e "s/__SALT__/$SALT/" -e "s/__NSALT__/$NSALT/g" -e "s/__SALTLINE__/$SALTLINE/" "$1" \
+    | sed -e "/__DISULFIDES__/r $FOLDER/disulfides.leap" -e "/__DISULFIDES__/d"
 }
 
 # Flag to indicate if ligand is present
@@ -109,6 +118,11 @@ fi
 # Extract protein without hydrogens
 vmd -dispdev text -e utils/extract_protein.tcl -args "$PDBFILE" "$FOLDER/protein_noh.pdb" > $FOLDER/extract_protein.log
 
+# Detect and bond disulfides (SG-SG < 2.5 A, overridable with SS_CUTOFF=...).
+# Renames the matching CYS -> CYX in $FOLDER/protein_noh.pdb (in place) and
+# writes $FOLDER/disulfides.{leap,json}; both are read above by fill().
+python utils/find_disulfides.py "$FOLDER/protein_noh.pdb" "$FOLDER" "${SS_CUTOFF:-2.5}" | tee $FOLDER/disulfides.log
+
 # System preparation using tleap
 NSALT=0; SALTLINE="# "
 if python -c "import sys; sys.exit(0 if float('$SALT') > 0 else 1)"; then
@@ -145,7 +159,7 @@ mkdir -p restraints
 vmd -dispdev text -e utils/create_omm.tcl > $FOLDER/create_omm.log
 
 # Check that the intended parameters ended up in the topology
-python utils/check_topology.py step3_input.parm7 $MODEL $WATER | tee $FOLDER/topology_report.txt
+python utils/check_topology.py step3_input.parm7 $MODEL $WATER $FOLDER/disulfides.json | tee $FOLDER/topology_report.txt
 if grep -q "^FAIL" $FOLDER/topology_report.txt; then
     echo "ERROR: topology check failed (see $FOLDER/topology_report.txt)"; exit 1
 fi
