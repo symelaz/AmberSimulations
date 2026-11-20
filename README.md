@@ -105,6 +105,69 @@ bash utils/run.sh <gpu_ids>
 `build.sh` copies the OpenMM inputs of the chosen model from `inputs/<MODEL>/` to the main folder.
 Edit those copies (`step4.*_equilibration.inp`, `step5_production.inp`) for a specific system; `inputs/` holds the templates.
 
+**Faster engine (optional, ~2.5x faster):** same build, then
+
+```bash
+conda activate openmm_faster
+bash utils/run.sh <gpu_ids> --faster
+```
+
+See "Faster engine (`--faster`)" below; setup in `Installation_readme.md`, section 5.
+
+---
+
+## Faster engine (`--faster`)
+
+`run.sh --faster` runs the same simulation with **NVIDIA cuPotential**
+([github.com/NVIDIA/cuPotential](https://github.com/NVIDIA/cuPotential)) in place of three OpenMM
+components: the nonbonded force (PME electrostatics + LJ), the `LangevinMiddleIntegrator` and the
+isotropic `MonteCarloBarostat`. Bonded terms, CMAP, restraints, constraints, HMR, reporters and all
+output files stay the same. Without `--faster` nothing changes (classic engine).
+
+**Same model.** The same cutoff, Ewald tolerance target, LJ dispersion correction, 1-4 exceptions,
+temperature, friction, pressure and barostat frequency are used, read from the System the classic
+path builds. cuPotential computes long-range electrostatics with its own splitting/spreading
+functions instead of standard PME.
+
+**Measured on our systems** (A100, ff19SB/TIP4P-Ew, 4 fs HMR, NPT, `run.sh` settings), against a
+converged reference (stock OpenMM, double precision, Ewald tolerance 1e-6, same LJ model):
+
+| system | classic | `--faster` | speedup | force error classic / faster |
+|---|---|---|---|---|
+| nanobody, 42,855 atoms | 744 ns/day | 1,933 ns/day | 2.6x | 8.1e-4 / 3.9e-4 |
+| nanobody + antigen, 148,565 atoms | 290 ns/day | 732 ns/day | 2.5x | 8.1e-4 / 4.3e-4 |
+
+200 ps NPT from the same equilibrated state: temperature on target and box volume within 0.15 %
+of the classic run. Speedups depend on the GPU (NVIDIA reports ~2-4x across GPU generations).
+
+**What `--faster` does per step:**
+
+| `.inp` | nonbonded | integrator | barostat |
+|---|---|---|---|
+| `integrator = langevin_middle` (production, 4 fs HMR) | cuPotential | cuPotential LangevinMiddle | cuPotential (isotropic) |
+| `integrator = langevin` (restrained equilibration) | cuPotential | stock Langevin | stock |
+
+Precision is `mixed` with `--faster` (cuPotential's validated configuration), `single` without.
+Each `.out` file states the engine, every component that was swapped, and the precision.
+
+**Refused, with an explanation, instead of run differently:** non-PME electrostatics, `vdw` other
+than `CutoffPeriodic`, implicit solvent, anisotropic/membrane barostats, simulated annealing,
+`e14scale != 1`, `-ff charmm`. The plugin also does not support LJPME or triclinic boxes.
+
+**Checkpoints.** A `.chk` file only loads into the engine that wrote it. `run.sh` records the
+engine in `run_engine.txt`; if you switch engines between production chunks it restarts from the
+portable `.rst` state instead, and says so. Equilibration -> production always goes through `.rst`.
+
+**Before switching a project over**, run one full replica with `--faster` and compare it with a
+classic replica (RMSD/RMSF, energies, density). The tests above are short (up to 200 ps).
+
+**One GPU per run:** two GPUs (`run.sh 0,1 --faster`) work but were slower in our test
+(996 vs 1,380 ns/day).
+
+**Requirements:** OpenMM 8.4 (the classic `openmm` env has 7.7; `--faster` uses its own env
+`openmm_faster`), an NVIDIA GPU of compute capability 7.5-12.0 (RTX 4090, A100, H100: yes), and a
+CUDA 13 driver. `run.sh --faster` stops immediately if the plugin is missing.
+
 ---
 
 ## Repository Structure
@@ -119,8 +182,11 @@ Edit those copies (`step4.*_equilibration.inp`, `step5_production.inp`) for a sp
   * `forcefields/<MODEL>/` – force-field files and leaprc of each model.
   * `add8.py` – adds the a99SB-disp extra backbone dihedrals (`a99SBdisp_tip4pd` only).
   * `check_topology.py` – checks water, protein and ion parameters in the final topology; the build stops if a check fails.
-  * `run.sh` – Runs all equilibration steps and the production runs.
+  * `run.sh` – Runs all equilibration steps and the production runs (`--faster`: cuPotential engine).
   * `openmm_run.py` – OpenMM execution script.
+  * `omm_cupotential.py` – the `--faster` engine: swaps in cuPotential, refuses unsupported settings.
+  * `install_faster.sh` – builds the `openmm_faster` environment with the cuPotential plugin.
+  * `check_faster.py` – checks a machine/environment/system for `--faster` (run on a GPU node).
   * `batch_submit.sh` – Helper script for submitting multiple jobs on a SLURM server.
   * `job.sh` – Example SLURM submission script for running a simulation.
   * `environment.yml` – Conda environment configuration for OpenMM.
@@ -208,7 +274,7 @@ If a gap should be closed, model the loop before building.
 ## Notes / Best Practices
 
 * Ensure the **PDB file is pre-optimized** (missing hydrogens may be added automatically).
-* Simulations require the **same GPU and CUDA version** if using checkpoint files.
+* Simulations require the **same GPU and CUDA version** if using checkpoint files, and the same engine (classic or `--faster`).
 * OpenMM v7.7 was used for this but you can also try with newer versions of OpenMM.
 * Systems with multiple chains are being renumbered by Amber with consecutive numbers You need to rename and renumber the different chains after md are finished to go back to your original chain/resid numbering.
 * Funky ligands might fail to be parameterized by Amber automatically.
