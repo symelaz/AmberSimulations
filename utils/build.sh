@@ -116,7 +116,10 @@ if [ -n "$RESNAME" ] && [ -n "$LIGCHARGE" ]; then
     # Convert the mol2 file back to PDB
     # to ensure compatibility between antechamber atom names and the PDB file
     # before running tleap
-    antechamber -i "$FOLDER"/out.mol2 -fi mol2 -o "$FOLDER"/out.pdb -fo pdb
+    # -dr no: pure format conversion. antechamber writes every bond order as 1
+    # in out.mol2, so acdoctor would reject any C=O / carboxylate as an
+    # "open valence" here, although the atom types and charges are correct.
+    antechamber -i "$FOLDER"/out.mol2 -fi mol2 -o "$FOLDER"/out.pdb -fo pdb -dr no
 
     LEAPFILE=utils/build_complex.leap
 else

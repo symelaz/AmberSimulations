@@ -155,6 +155,16 @@ try:
                 long_cn.append(f"{a1.residue.name}{a1.residue.idx + 1}-{a2.residue.name}{a2.residue.idx + 1}:{d:.2f}A")
     check("no stretched peptide bonds (C-N <= 2 A)", not long_cn,
           " ".join(long_cn) if long_cn else "all inter-residue C-N bonds <= 2 A")
+    # Any other bond (ligand included; a disulfide is ~2.05 A): a wrong
+    # template/connectivity shows up as a bond between atoms far apart.
+    long_any = []
+    for b in parm.bonds:
+        d = float(np.linalg.norm(xyz[b.atom1.idx] - xyz[b.atom2.idx]))
+        if d > 2.5:
+            long_any.append(f"{b.atom1.residue.name}{b.atom1.residue.idx + 1}:{b.atom1.name}-"
+                            f"{b.atom2.residue.name}{b.atom2.residue.idx + 1}:{b.atom2.name}:{d:.2f}A")
+    check("no stretched bonds anywhere (<= 2.5 A)", not long_any,
+          " ".join(long_any[:10]) if long_any else "all bonds <= 2.5 A")
 except FileNotFoundError:
     print("info  no .rst7 next to the topology, peptide bond lengths not checked")
 
