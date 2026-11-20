@@ -174,6 +174,17 @@ PASS  faster engine 1000 steps NPT, 4 fs           T = 302.6 K (target 303.15), 
 RESULT: READY for run.sh --faster
 ```
 
+**Test the pipeline and measure the speed-up** on a system built with `build.sh` (GPU node):
+
+```bash
+bash utils/test_faster_pipeline.sh /path/to/built/system 0       # full run.sh --faster, shortened
+python utils/benchmark_faster.py step3_input.parm7 step5_1.rst    # classic vs faster on this GPU
+```
+
+`test_faster_pipeline.sh` works on a temporary copy (the system folder is not changed) and ends
+with `RESULT: run.sh --faster pipeline OK`. `benchmark_faster.py` is best given an equilibrated
+state (`step4.*_equilibration.rst` or `step5_*.rst`).
+
 **Run** (in `utils/job.sh`: `conda activate openmm_faster` and `bash utils/run.sh '0' --faster`)
 
 ```bash

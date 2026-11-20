@@ -158,6 +158,17 @@ than `CutoffPeriodic`, implicit solvent, anisotropic/membrane barostats, simulat
 engine in `run_engine.txt`; if you switch engines between production chunks it restarts from the
 portable `.rst` state instead, and says so. Equilibration -> production always goes through `.rst`.
 
+**Tests** (GPU node, `conda activate openmm_faster`):
+
+| script | what it answers | time |
+|---|---|---|
+| `python utils/check_faster.py [parm7 rst7]` | Is this machine/environment ready? Driver, CUDA, GPU, accuracy vs a converged reference, 1000 NPT steps. | ~1 min |
+| `bash utils/test_faster_pipeline.sh <system_dir> [gpu]` | Does the whole `run.sh --faster` pipeline work on this system? Minimisation, restrained equilibration, production chunks, checkpoint restart, engine switch, outputs. Runs in a temporary copy. | a few min |
+| `python utils/benchmark_faster.py <parm7> <step5_1.rst>` | How much faster, and is it as accurate, on this system and GPU? | 5-15 min |
+
+All three end with a clear PASS/FAIL or numbers; `check_faster.py` and `test_faster_pipeline.sh`
+exit with code 0 only if everything passed.
+
 **Before switching a project over**, run one full replica with `--faster` and compare it with a
 classic replica (RMSD/RMSF, energies, density). The tests above are short (up to 200 ps).
 
@@ -187,6 +198,8 @@ CUDA 13 driver. `run.sh --faster` stops immediately if the plugin is missing.
   * `omm_cupotential.py` – the `--faster` engine: swaps in cuPotential, refuses unsupported settings.
   * `install_faster.sh` – builds the `openmm_faster` environment with the cuPotential plugin.
   * `check_faster.py` – checks a machine/environment/system for `--faster` (run on a GPU node).
+  * `test_faster_pipeline.sh` – end-to-end test of `run.sh --faster` on a built system (temporary copy).
+  * `benchmark_faster.py` – classic vs `--faster` on a built system: accuracy, ns/day, NPT stability.
   * `batch_submit.sh` – Helper script for submitting multiple jobs on a SLURM server.
   * `job.sh` – Example SLURM submission script for running a simulation.
   * `environment.yml` – Conda environment configuration for OpenMM.
