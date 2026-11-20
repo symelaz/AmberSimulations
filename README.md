@@ -55,6 +55,10 @@ All options are environment variables in front of `build.sh`; anything not set u
 | `WATER`  | `authors` | `authors`, `amber` | `a99SBdisp_tip4pd` only. `authors`: water of pipeline_amber_tip4pd (H +0.59 / EP −1.18). `amber`: AmberTools `leaprc.water.tip4pd-a99SBdisp` (H +0.58 / EP −1.16). Same LJ. |
 | `BOX`    | `rect`  | `rect`, `cubic` | box shape |
 | `PAD`    | `15.0`  | number (Å) | minimum solvent padding around the solute |
+| `MINBOX` | unset   | number (Å) | target **minimum box side**; overrides `PAD` with a per-axis padding so every side is ≥ `MINBOX` (needs `BOX=rect`). For elongated solutes that tumble, what matters is the shortest box side vs. the solute's diameter, not the padding. The padding is calibrated with one probe solvate pass, not guessed. |
+| `PADFLOOR` | `8.0` | number (Å) | with `MINBOX`: smallest per-axis padding allowed |
+| `SS_CUTOFF` | `2.5` | number (Å) | SG-SG distance below which two CYS are bonded as a disulfide |
+| `CN_CUTOFF` | `2.0` | number (Å) | C(i)-N(i+1) distance above which the backbone is treated as broken (TER, no bond) |
 | `SALT`   | `0` (ff19SB_tip3p) / `0.15` (ff19SB_tip4pew, a99SBdisp_tip4pd) | number (M) | salt added on top of neutralization (0 = neutralize only) |
 | `CATION` | `Na+` (ff19SB_tip3p, ff19SB_tip4pew) / `K+` (a99SBdisp_tip4pd) | `Na+`, `K+` | cation for neutralization and salt (anion is always Cl−) |
 
@@ -133,11 +137,32 @@ describes for multi-chain systems.
 
 `utils/check_topology.py` then verifies, in the finished topology, that each detected pair really is
 bonded SG-SG, both residues are CYX, and neither carries a stray HG - not merely that no error was
-printed. A build with zero cysteine pairs is a normal, unflagged outcome.
+printed - and that **every** CYX in the topology has an SG-SG bond (a CYX without a partner is a
+sulfur radical). A build with zero cysteine pairs is a normal, unflagged outcome.
+
+**Near misses are warned about, not bonded.** A CYS pair with SG-SG between the cutoff and 6 A is
+printed as `WARNING near-miss` in `build/disulfides.log`. That is almost always a native disulfide
+whose geometry was damaged upstream (loop remodelling, grafting, a predicted model). Fix the input
+structure or raise `SS_CUTOFF` deliberately. Do not ignore the warning.
+
+## Chain breaks and gaps
+
+`utils/extract_protein.tcl` writes the protein with VMD, and VMD drops every `TER` of the input.
+tleap only starts a new chain at a `TER`, so without them it bonds C(i) to N(i+1) across **every**
+break, including intentional gaps (unresolved loops left open) and loops that loop closure failed to
+close. tleap only prints `There is a bond of X angstroms between C and N atoms` and carries on.
+Minimisation and equilibration then pull the stretched bond shut and distort the structure around it.
+
+`utils/mark_chain_breaks.py` therefore runs right after extraction and puts a `TER` back at every
+chain-ID change and at every real backbone gap (C(i)-N(i+1) > 2.0 A, `CN_CUTOFF=...`). The gaps are
+listed in `build/chain_breaks.log`; they stay **open** (charged termini), they are not modelled.
+`check_topology.py` fails the build if any inter-residue C-N bond in the final coordinates is > 2 A.
+If a gap should be closed, model the loop before building.
 
 ## Build outputs
 
 * `step3_input.parm7 / .rst7 / .pdb`, `restraints/prot_pos.txt` – simulation inputs.
+* `build/chain_breaks.log` – chain boundaries and backbone gaps that were kept open (TER).
 * `build/disulfides.leap`, `build/disulfides.json` – disulfides found by `find_disulfides.py` (bond
   commands and, respectively, the same pairs with original chain/resSeq labels and SG-SG distance).
 * `build/topology_report.txt` – parameter check (all lines must be PASS), including a water-model
@@ -189,6 +214,7 @@ printed. A build with zero cysteine pairs is a normal, unflagged outcome.
 * Funky ligands might fail to be parameterized by Amber automatically.
 * Very large biological systems might fail to be parameterized by Amber. And for Membrane systems I also recommend to go with CHARMM force-field. DNA however is being handled better by Amber.
 * Step5 production runs are controlled by the `.inp` file parameters (`dt`, `nstout`, `Target_ns`).
-* Disulfide bonds are detected automatically (see "Disulfide bonds" above); only genuine SG-SG contacts within the cutoff are bonded, nothing else changes.
+* Disulfide bonds are detected automatically (see "Disulfide bonds" above); only genuine SG-SG contacts within the cutoff are bonded, nothing else changes. Check `build/disulfides.log` for near-miss warnings.
+* Backbone gaps are kept open, not modelled (see "Chain breaks and gaps" above).
 * GAFF2 ligands have not been validated with TIP4P-D water.
 * Extended / disordered structures (e.g. AlphaFold models with low pLDDT): with `BOX=rect` the chain can reach its periodic image when it rotates; consider `BOX=cubic` (large) or compacting the model first.

@@ -128,6 +128,36 @@ if SS_JSON:
     else:
         print("info  no disulfides were detected in the input (0 CYS pairs within cutoff)")
 
+# Every CYX must actually be bonded to another SG: a CYX without its partner
+# has no HG either, i.e. a sulfur radical (happens when the input already
+# names a residue CYX but its partner is out of range or missing).
+lonely = []
+for r in parm.residues:
+    if r.name != 'CYX':
+        continue
+    sg = next((a for a in r.atoms if a.name == 'SG'), None)
+    if sg is None or not any(o.name == 'SG' and o.residue is not r
+                             for b in sg.bonds for o in (b.atom1, b.atom2)):
+        lonely.append(f"{r.name}{r.idx + 1}")
+check("every CYX has an SG-SG bond", not lonely, f"unbonded: {lonely}" if lonely else f"{sum(r.name == 'CYX' for r in parm.residues)} CYX")
+
+# Peptide bonds: tleap bonds C(i)-N(i+1) across any break it is not told about
+# with a TER, printing only a warning. Check the built coordinates.
+try:
+    import numpy as np
+    xyz = parmed.load_file(sys.argv[1], xyz=sys.argv[1].rsplit('.', 1)[0] + '.rst7').coordinates
+    long_cn = []
+    for b in parm.bonds:
+        a1, a2 = b.atom1, b.atom2
+        if a1.residue is not a2.residue and {a1.name, a2.name} == {'C', 'N'}:
+            d = float(np.linalg.norm(xyz[a1.idx] - xyz[a2.idx]))
+            if d > 2.0:
+                long_cn.append(f"{a1.residue.name}{a1.residue.idx + 1}-{a2.residue.name}{a2.residue.idx + 1}:{d:.2f}A")
+    check("no stretched peptide bonds (C-N <= 2 A)", not long_cn,
+          " ".join(long_cn) if long_cn else "all inter-residue C-N bonds <= 2 A")
+except FileNotFoundError:
+    print("info  no .rst7 next to the topology, peptide bond lengths not checked")
+
 q = sum(a.charge for a in parm.atoms)
 check("net charge ~ 0", abs(q) < 1e-3, f"{q:.4f}")
 print("RESULT:", "OK" if ok else "FAILED")

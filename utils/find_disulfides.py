@@ -79,6 +79,19 @@ for i, a in enumerate(cys):
 
 label = lambda k: "%s/%s" % (k[0], k[1].strip())  # noqa: E731
 
+# Near misses: SG-SG between the cutoff and 6 A is almost always a native
+# disulfide whose geometry was damaged upstream (loop modelling, grafting,
+# a predicted structure), not two genuinely free cysteines. It is NOT bonded,
+# but warn loudly so it is checked by hand.
+NEAR = 6.0
+for i, a in enumerate(cys):
+    for b in cys[i + 1:]:
+        d = dist(residues[a]["atoms"]["SG"], residues[b]["atoms"]["SG"])
+        if CUTOFF <= d < NEAR:
+            print(f"find_disulfides: WARNING near-miss CYS {label(a)} - CYS {label(b)} "
+                  f"SG-SG {d:.2f} A (>= cutoff {CUTOFF} A, NOT bonded) - "
+                  f"check whether this is a native disulfide")
+
 if not pairs:
     print(f"find_disulfides: {len(cys)} CYS residue(s), no SG-SG pair within "
           f"{CUTOFF} A -> 0 disulfides built")
